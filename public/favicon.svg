@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bgFav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B1533" />
+      <stop offset="100%" stop-color="#152A5A" />
+    </linearGradient>
+    <linearGradient id="verdeFav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1B7A57" />
+      <stop offset="100%" stop-color="#0E6B47" />
+    </linearGradient>
+  </defs>
+
+  <!-- Fundo com cantos arredondados -->
+  <rect width="64" height="64" rx="14" fill="url(#bgFav)" />
+
+  <!-- Losango preenchendo quase todo o espaço -->
+  <polygon
+    points="32,8 56,32 32,56 8,32"
+    fill="url(#verdeFav)"
+    stroke="#FFFFFF"
+    stroke-width="2.5"
+    stroke-linejoin="round"
+  />
+
+  <!-- M estilizado dentro -->
+  <path
+    d="M 20,38 L 20,28 L 32,38 L 32,24 L 44,38 L 44,28"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.95"
+  />
+</svg>

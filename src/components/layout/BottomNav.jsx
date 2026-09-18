@@ -10,6 +10,7 @@ import {
   CreditCard,
   GitCompare,
   Settings,
+  UserRound,
 } from 'lucide-react';
 
 export function BottomNav() {
@@ -30,6 +31,7 @@ export function BottomNav() {
           { to: '/pagamentos', label: 'Pagar', icon: CreditCard },
         ]
       : [{ to: '/utilizadores', label: 'Equipa', icon: Users }]),
+    { to: '/vendedores', label: 'Vendedores', icon: UserRound },
     { to: '/perfil-empresa', label: 'Empresa', icon: Settings },
   ];
 

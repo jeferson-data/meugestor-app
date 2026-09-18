@@ -11,6 +11,7 @@ import {
   GitCompare,
   Settings,
   FileText,
+  UserRound,
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -32,6 +33,7 @@ export function Sidebar() {
           { to: '/pagamentos', label: 'Pagamentos', icon: CreditCard },
         ]
       : []),
+    { to: '/vendedores', label: 'Vendedores', icon: UserRound },
     { to: '/utilizadores', label: 'Utilizadores', icon: Users },
     { to: '/perfil-empresa', label: 'Perfil da empresa', icon: Settings },
   ];

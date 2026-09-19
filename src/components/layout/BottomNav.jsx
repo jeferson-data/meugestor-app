@@ -16,14 +16,14 @@ import {
 export function BottomNav() {
   const { perfil, recursosPlano } = useApp();
   const isAdmin = ['admin_programa', 'dono_programa'].includes(perfil?.role);
-  const temConsiliacao = recursosPlano?.consiliacao === true;
+  const temConciliacao = recursosPlano?.conciliacao === true;
 
   const links = [
     { to: '/', label: 'Início', icon: LayoutDashboard, end: true },
     { to: '/lancamentos', label: 'Lançar', icon: PlusCircle },
     { to: '/extrato', label: 'Extrato', icon: ListOrdered },
-    ...(temConsiliacao
-      ? [{ to: '/consiliacao', label: 'Conciliar', icon: GitCompare }]
+    ...(temConciliacao
+      ? [{ to: '/conciliacao', label: 'Conciliar', icon: GitCompare }]
       : []),
     ...(isAdmin
       ? [

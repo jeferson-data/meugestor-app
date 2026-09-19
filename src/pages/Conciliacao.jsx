@@ -5,7 +5,7 @@ import { CreditCard, Lock } from 'lucide-react';
 export function Conciliacao() {
   const { empresaAtiva, recursosPlano, plano } = useApp();
 
-  const disponivel = recursosPlano?.conciliacao === true;
+  const disponivel = [true, 'true', 1, '1'].includes(recursosPlano?.conciliacao);
 
   if (!disponivel) {
     return (

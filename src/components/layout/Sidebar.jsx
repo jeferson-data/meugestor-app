@@ -17,7 +17,7 @@ import {
 export function Sidebar() {
   const { perfil, recursosPlano } = useApp();
   const isAdmin = ['admin_programa', 'dono_programa'].includes(perfil?.role);
-  const temConciliacao = recursosPlano?.conciliacao === true;
+  const temConciliacao = [true, 'true', 1, '1'].includes(recursosPlano?.conciliacao);
 
   const links = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },

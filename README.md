@@ -6,7 +6,7 @@ Aplicacao web para gestao financeira e operacional de pequenas empresas. O MeuGe
 
 - Dashboard com indicadores e analises financeiras.
 - Lancamento e consulta de movimentacoes.
-- Extrato e conciliacao de registros.
+- Extrato e conciliação de registros.
 - Cadastro e gerenciamento de empresas.
 - Controle de pagamentos, assinaturas e planos.
 - Cadastro de vendedores e pedidos.
@@ -108,7 +108,7 @@ Depois, rode `npm run dev` e confira manualmente:
 2. Redirecionamento de usuario nao autenticado para `/login`.
 3. Carregamento e troca da empresa ativa.
 4. Criacao, edicao, exclusao e filtros de movimentacoes.
-5. Dashboard, extrato e conciliacao com dados reais de teste.
+5. Dashboard, extrato e conciliação com dados reais de teste.
 6. Empresas, pagamentos, vendedores, pedidos e utilizadores conforme o perfil de acesso.
 7. Bloqueio de uma conta suspensa e acesso de administradores.
 8. Responsividade em uma janela estreita ou no modo de dispositivo do navegador.

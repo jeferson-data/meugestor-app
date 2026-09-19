@@ -19,7 +19,7 @@ export function Conciliacao() {
           <Lock className="text-brand-muted mx-auto mb-4" size={48} />
           <h2 className="text-xl font-bold mb-2">Recurso indisponível</h2>
           <p className="text-brand-muted text-sm mb-1">
-            A conciliação Bancária está disponível apenas no <strong>plano Completo</strong>.
+            A conciliação bancária está disponível apenas no <strong>plano Completo</strong>.
           </p>
           <p className="text-brand-subtle text-xs">
             {plano ? `Plano atual: ${plano.nome}` : 'Sem plano ativo.'}

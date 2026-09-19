@@ -12,7 +12,7 @@ import { Empresas } from './pages/Empresas';
 import { Pagamentos } from './pages/Pagamentos';
 import { Utilizadores } from './pages/Utilizadores';
 import { Vendedores } from './pages/Vendedores';
-import { Consiliacao } from './pages/Consiliacao';
+import { Conciliacao } from './pages/Conciliacao';
 import { PerfilEmpresa } from './pages/PerfilEmpresa';
 import { Pedidos } from './pages/Pedidos';
 import { ContaSuspensa } from './pages/ContaSuspensa';
@@ -59,7 +59,7 @@ function AppRoutes() {
         <Route path="/pagamentos" element={<Pagamentos />} />
         <Route path="/utilizadores" element={<Utilizadores />} />
         <Route path="/vendedores" element={<Vendedores />} />
-        <Route path="/consiliacao" element={<Consiliacao />} />
+        <Route path="/conciliacao" element={<Conciliacao />} />
         <Route path="/perfil-empresa" element={<PerfilEmpresa />} />
         <Route path="/pedidos" element={<Pedidos />} />
       </Route>

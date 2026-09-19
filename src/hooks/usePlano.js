@@ -3,7 +3,7 @@ import { supabase } from '../services/supabase';
 
 const RECURSOS_DEFAULT = {
   relatorios: false,
-  consiliacao: false,
+  conciliacao: false,
   max_utilizadores: 1,
 };
 

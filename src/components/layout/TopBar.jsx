@@ -26,7 +26,7 @@ export function TopBar() {
           <div className="text-xs text-brand-muted uppercase tracking-wide flex items-center gap-1">
             {isAdmin ? (
               <>
-                <Eye size={12} /> A ver empresa
+                <Eye size={12} /> Empresa em visualização
               </>
             ) : (
               'Empresa ativa'

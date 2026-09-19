@@ -2,15 +2,15 @@ import React from 'react';
 import { useApp } from '../contexts/AppContext';
 import { CreditCard, Lock } from 'lucide-react';
 
-export function Consiliacao() {
+export function Conciliacao() {
   const { empresaAtiva, recursosPlano, plano } = useApp();
 
-  const disponivel = recursosPlano?.consiliacao === true;
+  const disponivel = recursosPlano?.conciliacao === true;
 
   if (!disponivel) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-1">Consiliação bancária</h1>
+        <h1 className="text-2xl font-bold mb-1">Conciliação bancária</h1>
         <p className="text-brand-muted mb-6">
           Compare os lançamentos do sistema com o extrato do banco.
         </p>
@@ -19,7 +19,7 @@ export function Consiliacao() {
           <Lock className="text-brand-muted mx-auto mb-4" size={48} />
           <h2 className="text-xl font-bold mb-2">Recurso indisponível</h2>
           <p className="text-brand-muted text-sm mb-1">
-            A consiliação bancária está disponível apenas no <strong>plano Completo</strong>.
+            A conciliação bancária está disponível apenas no <strong>plano completo</strong>.
           </p>
           <p className="text-brand-subtle text-xs">
             {plano ? `Plano atual: ${plano.nome}` : 'Sem plano ativo.'}
@@ -31,7 +31,7 @@ export function Consiliacao() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1">Consiliação bancária</h1>
+      <h1 className="text-2xl font-bold mb-1">Conciliação bancária</h1>
       <p className="text-brand-muted mb-6">
         Compare os lançamentos do sistema com o extrato do banco.
       </p>

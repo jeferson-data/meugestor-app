@@ -17,14 +17,14 @@ import {
 export function Sidebar() {
   const { perfil, recursosPlano } = useApp();
   const isAdmin = ['admin_programa', 'dono_programa'].includes(perfil?.role);
-  const temConsiliacao = recursosPlano?.consiliacao === true;
+  const temConciliacao = recursosPlano?.conciliacao === true;
 
   const links = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
     { to: '/lancamentos', label: 'Lançamentos', icon: PlusCircle },
     { to: '/extrato', label: 'Extrato', icon: ListOrdered },
-    ...(temConsiliacao
-      ? [{ to: '/consiliacao', label: 'Consiliação', icon: GitCompare }]
+    ...(temConciliacao
+      ? [{ to: '/conciliacao', label: 'Conciliação', icon: GitCompare }]
       : []),
     ...(isAdmin
       ? [

@@ -10,7 +10,7 @@ export function Conciliacao() {
   if (!disponivel) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-1">Consiliação bancária</h1>
+        <h1 className="text-2xl font-bold mb-1">Conciliação Bancária</h1>
         <p className="text-brand-muted mb-6">
           Compare os lançamentos do sistema com o extrato do banco.
         </p>
@@ -19,7 +19,7 @@ export function Conciliacao() {
           <Lock className="text-brand-muted mx-auto mb-4" size={48} />
           <h2 className="text-xl font-bold mb-2">Recurso indisponível</h2>
           <p className="text-brand-muted text-sm mb-1">
-            A consiliação bancária está disponível apenas no <strong>plano Completo</strong>.
+            A conciliação bancária está disponível apenas no <strong>plano Completo</strong>.
           </p>
           <p className="text-brand-subtle text-xs">
             {plano ? `Plano atual: ${plano.nome}` : 'Sem plano ativo.'}
@@ -31,7 +31,7 @@ export function Conciliacao() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1">Consiliação bancária</h1>
+      <h1 className="text-2xl font-bold mb-1">Conciliação Bancária</h1>
       <p className="text-brand-muted mb-6">
         Compare os lançamentos do sistema com o extrato do banco.
       </p>

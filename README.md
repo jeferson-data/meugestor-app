@@ -56,8 +56,7 @@ npm --version
 3. Crie um arquivo `.env.local` na raiz do projeto:
 
    ```env
-   VITE_SUPABASE_URL=https://qnrsadebmrxinkpsuusu.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucnNhZGVibXJ4aW5rcHN1dXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3NDQyOTUsImV4cCI6MjEwNTMyMDI5NX0.EM83qjwI-srMxheUlmgaM4N2KpOo59_-37BhIaD1yxc
+  solicite ao desenvolvedor
    ```
 
    Use os valores fornecidos pelo responsavel pelo projeto Supabase. Nao publique chaves em issues, pull requests ou no README. O arquivo `.env.local` e carregado automaticamente pelo Vite e nao deve ser versionado.

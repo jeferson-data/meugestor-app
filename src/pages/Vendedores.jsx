@@ -28,6 +28,7 @@ export function Vendedores() {
   const [carregando, setCarregando] = useState(true);
   const [confirmarRemocao, setConfirmarRemocao] = useState(null);
 
+  // ─── CARREGAR ──────────────────────────────────────────────
   const carregar = async () => {
     if (!empresaAtiva && !isAdmin) {
       setVendedores([]);
@@ -37,12 +38,37 @@ export function Vendedores() {
 
     setCarregando(true);
     try {
-      let consulta = supabase.from('vendedores').select('*').order('nome');
-      if (!isAdmin) consulta = consulta.eq('empresa_id', empresaAtiva.id);
+      let consulta = supabase
+        .from('vendedores_com_carteira')
+        .select('*')
+        .order('vendedor_nome');
+
+      if (!isAdmin) {
+        consulta = consulta.eq('empresa_id', empresaAtiva.id);
+      }
 
       const { data, error } = await consulta;
       if (error) throw error;
-      setVendedores(data || []);
+
+      // A view tem 1 linha por vínculo. Agrupa por vendedor:
+      const agrupado = (data || []).reduce((acc, linha) => {
+        const id = linha.vendedor_id;
+        if (!acc[id]) {
+          acc[id] = {
+            id,
+            nome: linha.vendedor_nome,
+            email: linha.vendedor_email,
+            telefone: linha.vendedor_telefone ?? null,
+            comissao_percentual: linha.comissao_percentual,
+            empresa_id: linha.empresa_id,
+            empresa_nome: linha.empresa_nome,
+            vinculo_id: linha.vinculo_id,
+          };
+        }
+        return acc;
+      }, {});
+
+      setVendedores(Object.values(agrupado));
     } catch (err) {
       setErro(err.message);
     } finally {
@@ -55,6 +81,7 @@ export function Vendedores() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [empresaAtiva, isAdmin]);
 
+  // ─── MODAL ─────────────────────────────────────────────────
   const abrirNovo = () => {
     setVendedorEditando(null);
     setForm({ ...formularioInicial, empresa_id: empresaAtiva?.id || '' });
@@ -80,6 +107,7 @@ export function Vendedores() {
     setErro('');
   };
 
+  // ─── CRIAR / EDITAR ────────────────────────────────────────
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErro('');
@@ -95,37 +123,107 @@ export function Vendedores() {
 
     setLoading(true);
     try {
-      const dados = {
-        nome: form.nome.trim(),
-        email: form.email.trim() || null,
-        telefone: form.telefone.trim() || null,
-        empresa_id: form.empresa_id,
-      };
+      // ── EDIÇÃO ─────────────────────────────────────────
+      if (vendedorEditando) {
+        // 1) Atualiza dados do perfil
+        const { error: errUser } = await supabase
+          .from('usuarios')
+          .update({
+            nome: form.nome.trim(),
+            email: form.email.trim() || null,
+            telefone: form.telefone.trim() || null,
+          })
+          .eq('id', vendedorEditando.id);
 
-      const query = vendedorEditando
-        ? supabase.from('vendedores').update(dados).eq('id', vendedorEditando.id)
-        : supabase.from('vendedores').insert([dados]);
-      const { error } = await query;
-      if (error) throw error;
+        if (errUser) throw errUser;
+
+        // 2) Se mudou de empresa, atualiza o vínculo
+        if (form.empresa_id !== vendedorEditando.empresa_id) {
+          // Desativa vínculos antigos
+          await supabase
+            .from('empresa_vendedores')
+            .update({ ativo: false, principal: false })
+            .eq('vendedor_id', vendedorEditando.id);
+
+          // Cria/reativa o vínculo novo
+          const { error: errVinc } = await supabase
+            .from('empresa_vendedores')
+            .upsert(
+              {
+                empresa_id: form.empresa_id,
+                vendedor_id: vendedorEditando.id,
+                ativo: true,
+                principal: true,
+              },
+              { onConflict: 'empresa_id,vendedor_id' }
+            );
+
+          if (errVinc) throw errVinc;
+        }
+
+        fecharModal();
+        await carregar();
+        return;
+      }
+
+      // ── CRIAÇÃO ────────────────────────────────────────
+      // Chama a Edge Function que cria Auth + usuarios + vínculo
+      const { data, error: errFn } = await supabase.functions.invoke(
+        'criar-vendedor',
+        {
+          body: {
+            nome: form.nome.trim(),
+            email: form.email.trim() || null,
+            telefone: form.telefone.trim() || null,
+            empresa_id: form.empresa_id,
+            comissao_percentual: 15, // ajuste conforme sua regra
+          },
+        }
+      );
+
+      if (errFn) throw errFn;
+      if (data?.error) throw new Error(data.error);
+
+      // Opcional: mostrar a senha temporária pro admin repassar
+      if (data?.senha_temporaria) {
+        alert(
+          `Vendedor criado!\n\nE-mail: ${form.email}\nSenha temporária: ${data.senha_temporaria}\n\nRepasse ao vendedor e oriente-o a trocar no primeiro acesso.`
+        );
+      }
 
       fecharModal();
       await carregar();
     } catch (err) {
-      setErro(err.message);
+      setErro(err.message || 'Erro ao salvar vendedor.');
     } finally {
       setLoading(false);
     }
   };
 
+  // ─── REMOVER ───────────────────────────────────────────────
   const handleRemover = async () => {
     if (!confirmarRemocao) return;
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('vendedores')
+      // 1) Remove o(s) vínculo(s)
+      const { error: errVinc } = await supabase
+        .from('empresa_vendedores')
+        .delete()
+        .eq('vendedor_id', confirmarRemocao.id);
+
+      if (errVinc) throw errVinc;
+
+      // 2) Remove o perfil
+      const { error: errUser } = await supabase
+        .from('usuarios')
         .delete()
         .eq('id', confirmarRemocao.id);
-      if (error) throw error;
+
+      if (errUser) throw errUser;
+
+      // ⚠️ O usuário do Auth continua existindo. Se quiser remover
+      // também, crie uma Edge Function "remover-vendedor" com service_role.
+
       setConfirmarRemocao(null);
       await carregar();
     } catch (err) {
@@ -136,8 +234,10 @@ export function Vendedores() {
   };
 
   const nomeEmpresa = (empresaId) =>
-    empresas.find((empresa) => empresa.id === empresaId)?.nome || 'Empresa não encontrada';
+    empresas.find((empresa) => empresa.id === empresaId)?.nome ||
+    'Empresa não encontrada';
 
+  // ─── RENDER ────────────────────────────────────────────────
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -184,7 +284,8 @@ export function Vendedores() {
                   </div>
                   {isAdmin && (
                     <div className="flex items-center gap-1 text-brand-subtle text-xs mt-1">
-                      <Building2 size={13} /> {nomeEmpresa(vendedor.empresa_id)}
+                      <Building2 size={13} />{' '}
+                      {vendedor.empresa_nome || nomeEmpresa(vendedor.empresa_id)}
                     </div>
                   )}
                 </div>
@@ -219,7 +320,11 @@ export function Vendedores() {
               <h2 className="text-xl font-bold">
                 {vendedorEditando ? 'Editar vendedor' : 'Novo vendedor'}
               </h2>
-              <button type="button" onClick={fecharModal} className="text-brand-muted hover:text-brand-red">
+              <button
+                type="button"
+                onClick={fecharModal}
+                className="text-brand-muted hover:text-brand-red"
+              >
                 <X size={22} />
               </button>
             </div>
@@ -234,7 +339,9 @@ export function Vendedores() {
               <Input
                 label="Nome completo"
                 value={form.nome}
-                onChange={(event) => setForm({ ...form, nome: event.target.value })}
+                onChange={(event) =>
+                  setForm({ ...form, nome: event.target.value })
+                }
                 placeholder="Nome do vendedor"
                 required
               />
@@ -242,31 +349,45 @@ export function Vendedores() {
                 label="E-mail"
                 type="email"
                 value={form.email}
-                onChange={(event) => setForm({ ...form, email: event.target.value })}
+                onChange={(event) =>
+                  setForm({ ...form, email: event.target.value })
+                }
                 placeholder="vendedor@empresa.com"
               />
               <Input
                 label="Telefone"
                 value={form.telefone}
-                onChange={(event) => setForm({ ...form, telefone: event.target.value })}
+                onChange={(event) =>
+                  setForm({ ...form, telefone: event.target.value })
+                }
                 placeholder="(51) 99999-9999"
               />
               <div>
-                <label className="block text-sm font-semibold text-brand-muted mb-2">Empresa vinculada</label>
+                <label className="block text-sm font-semibold text-brand-muted mb-2">
+                  Empresa vinculada
+                </label>
                 <select
                   value={form.empresa_id}
-                  onChange={(event) => setForm({ ...form, empresa_id: event.target.value })}
+                  onChange={(event) =>
+                    setForm({ ...form, empresa_id: event.target.value })
+                  }
                   disabled={!isAdmin}
                   className="w-full px-4 py-3 rounded-xl bg-[#1A2A44] border border-brand-border text-brand-text focus:outline-none focus:border-brand-green disabled:opacity-60"
                 >
                   <option value="">Escolha a empresa</option>
                   {empresasVisiveis.map((empresa) => (
-                    <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>
+                    <option key={empresa.id} value={empresa.id}>
+                      {empresa.nome}
+                    </option>
                   ))}
                 </select>
               </div>
               <Button type="submit" disabled={loading}>
-                {loading ? 'A guardar...' : vendedorEditando ? 'Guardar alterações' : 'Cadastrar vendedor'}
+                {loading
+                  ? 'A guardar...'
+                  : vendedorEditando
+                  ? 'Guardar alterações'
+                  : 'Cadastrar vendedor'}
               </Button>
             </form>
           </div>
@@ -278,11 +399,23 @@ export function Vendedores() {
           <div className="w-full max-w-sm bg-brand-card border border-brand-border rounded-2xl p-6">
             <h2 className="text-lg font-bold mb-2">Remover vendedor?</h2>
             <p className="text-brand-muted text-sm mb-5">
-              O vínculo de <strong>{confirmarRemocao.nome}</strong> será removido.
+              O vínculo de <strong>{confirmarRemocao.nome}</strong> será
+              removido.
             </p>
             <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setConfirmarRemocao(null)}>Cancelar</Button>
-              <Button variant="danger" onClick={handleRemover} disabled={loading}>Remover</Button>
+              <Button
+                variant="ghost"
+                onClick={() => setConfirmarRemocao(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleRemover}
+                disabled={loading}
+              >
+                Remover
+              </Button>
             </div>
           </div>
         </div>

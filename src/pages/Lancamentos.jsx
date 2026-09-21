@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { paraCentavos } from '../utils/formatters';
+import { getCategoriasPorTipo } from '../utils/categorias';
 
 export function Lancamentos() {
   const { adicionarMovimentacao, empresaAtiva } = useApp();
@@ -18,11 +19,20 @@ export function Lancamentos() {
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const categoriasDisponiveis = getCategoriasPorTipo(tipo);
+
+  // Sempre que o tipo muda, limpa a categoria selecionada
+  // para evitar combinações inválidas (ex.: "Vendas" em uma despesa).
+  useEffect(() => {
+    setCategoria('');
+  }, [tipo]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErro('');
 
     if (!empresaAtiva) return setErro('Nenhuma empresa ativa.');
+    if (!categoria) return setErro('Selecione uma categoria.');
     if (!descricao.trim()) return setErro('Informe a descrição.');
     if (!valor || Number(valor) <= 0) return setErro('Informe um valor válido.');
 
@@ -78,12 +88,26 @@ export function Lancamentos() {
           </button>
         </div>
 
-        <Input
-          label="Categoria"
-          value={categoria}
-          onChange={(e) => setCategoria(e.target.value)}
-          placeholder="Ex: Venda de produtos"
-        />
+        <div>
+          <label className="block text-sm font-semibold text-brand-muted mb-2">
+            Categoria
+          </label>
+          <select
+            value={categoria}
+            onChange={(e) => setCategoria(e.target.value)}
+            required
+            className="w-full px-4 py-3 rounded-xl bg-[#1A2A44] border border-brand-border text-brand-text focus:outline-none focus:border-brand-green"
+          >
+            <option value="" disabled>
+              Selecione uma categoria
+            </option>
+            {categoriasDisponiveis.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <Input
           label="Descrição"
@@ -111,7 +135,9 @@ export function Lancamentos() {
         />
 
         <div>
-          <label className="block text-sm font-semibold text-brand-muted mb-2">Status</label>
+          <label className="block text-sm font-semibold text-brand-muted mb-2">
+            Status
+          </label>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}

@@ -46,6 +46,7 @@ export function AppProvider({ children }) {
   const [empresas, setEmpresas] = useState([]);
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [auditLog, setAuditLog] = useState([]);
+  const [conciliacoes, setConciliacoes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(null);
 
@@ -184,6 +185,34 @@ export function AppProvider({ children }) {
   };
 
   // ------------------------------------------------------------
+  // Conciliações (leitura)
+  // ------------------------------------------------------------
+  const carregarConciliacoes = useCallback(async () => {
+    if (!empresaAtiva) {
+      setConciliacoes([]);
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from('conciliacoes')
+        .select('*')
+        .eq('empresa_id', empresaAtiva.id)
+        .order('confirmado_em', { ascending: false });
+
+      if (error) throw error;
+      setConciliacoes(data || []);
+    } catch (err) {
+      // A tabela pode não existir ainda em ambientes antigos; não quebra a app.
+      console.warn('Erro ao carregar conciliações:', err?.message);
+      setConciliacoes([]);
+    }
+  }, [empresaAtiva]);
+
+  useEffect(() => {
+    carregarConciliacoes();
+  }, [carregarConciliacoes]);
+
+  // ------------------------------------------------------------
   // CRUD de movimentações
   // ------------------------------------------------------------
   const adicionarMovimentacao = async (dados) => {
@@ -270,6 +299,7 @@ export function AppProvider({ children }) {
       if (error) throw error;
 
       setMovimentacoes((prev) => prev.filter((m) => m.id !== id));
+      setConciliacoes((prev) => prev.filter((c) => c.movimentacao_id !== id));
       await registarAuditLog('Removeu movimentação');
       return { success: true };
     } catch (err) {
@@ -279,9 +309,118 @@ export function AppProvider({ children }) {
   };
 
   // ------------------------------------------------------------
+  // Conciliação bancária (escrita)
+  // ------------------------------------------------------------
+
+  /**
+   * Persiste a confirmação de um par (item do arquivo ↔ lançamento do sistema).
+   * Espera receber o objeto `par` devolvido por `conciliar()`:
+   *   { item: { data, descricao, valor_centavos }, movimentacao: { id, ... } }
+   */
+  const confirmarConciliacao = async (par) => {
+    try {
+      if (!empresaAtiva) throw new Error('Nenhuma empresa ativa.');
+      if (!par?.item || !par?.movimentacao) {
+        throw new Error('Par de conciliação inválido.');
+      }
+
+      const { data, error } = await supabase
+        .from('conciliacoes')
+        .insert([
+          {
+            empresa_id: empresaAtiva.id,
+            movimentacao_id: par.movimentacao.id,
+            data_arquivo: par.item.data,
+            descricao_arquivo: par.item.descricao,
+            valor_centavos: par.item.valor_centavos,
+            status: 'conciliado',
+            confirmado_por: perfil?.nome || 'Sistema',
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setConciliacoes((prev) => [data, ...prev]);
+      await registarAuditLog(
+        `Conciliou "${par.item.descricao}" com "${par.movimentacao.descricao}"`
+      );
+      return { success: true, data };
+    } catch (err) {
+      console.error('Erro ao confirmar conciliação:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  /**
+   * Confirma vários pares em lote. Recebe um array de pares.
+   * Devolve { confirmados, falhas }.
+   */
+  const confirmarConciliacoesEmLote = async (pares) => {
+    if (!Array.isArray(pares) || !pares.length) {
+      return { confirmados: 0, falhas: [] };
+    }
+
+    let confirmados = 0;
+    const falhas = [];
+    const novasConciliacoes = [];
+
+    for (const par of pares) {
+      // Sequencial de propósito: garante ordem no audit_log
+      // e evita concorrência desnecessária no Supabase.
+      // eslint-disable-next-line no-await-in-loop
+      const res = await confirmarConciliacao(par);
+      if (res.success) {
+        confirmados += 1;
+        novasConciliacoes.push(res.data);
+      } else {
+        falhas.push({ par, erro: res.error });
+      }
+    }
+
+    return { confirmados, falhas, novasConciliacoes };
+  };
+
+  /**
+   * Reverte uma conciliação (usada quando o usuário desfaz uma confirmação).
+   */
+  const removerConciliacao = async (conciliacaoId) => {
+    try {
+      const { error } = await supabase
+        .from('conciliacoes')
+        .delete()
+        .eq('id', conciliacaoId);
+
+      if (error) throw error;
+
+      setConciliacoes((prev) => prev.filter((c) => c.id !== conciliacaoId));
+      await registarAuditLog('Reverteu uma conciliação');
+      return { success: true };
+    } catch (err) {
+      console.error('Erro ao remover conciliação:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  /**
+   * Devolve um Set com os IDs das movimentações já conciliadas.
+   * Útil para o Extrato mostrar o selo "✓ conciliado" sem varrer
+   * o array inteiro a cada render.
+   */
+  const movimentacoesConciliadas = React.useMemo(() => {
+    const set = new Set();
+    for (const c of conciliacoes) {
+      if (c.status === 'conciliado') set.add(c.movimentacao_id);
+    }
+    return set;
+  }, [conciliacoes]);
+
+  // ------------------------------------------------------------
   // Value
   // ------------------------------------------------------------
   const value = {
+    // Perfil / empresas / plano
     perfil,
     empresas,
     empresaAtiva,
@@ -289,16 +428,28 @@ export function AppProvider({ children }) {
     plano,
     recursosPlano,
     loadingPlano,
+
+    // Dados
     movimentacoes,
     auditLog,
+    conciliacoes,
+    movimentacoesConciliadas,
     loading,
     erro,
+
+    // CRUD de movimentações
     adicionarMovimentacao,
     atualizarMovimentacao,
     removerMovimentacao,
     registarAuditLog,
     recarregarMovimentacoes: carregarMovimentacoes,
     recarregarPerfil: carregarPerfilEEmpresas,
+
+    // Conciliação
+    confirmarConciliacao,
+    confirmarConciliacoesEmLote,
+    removerConciliacao,
+    recarregarConciliacoes: carregarConciliacoes,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

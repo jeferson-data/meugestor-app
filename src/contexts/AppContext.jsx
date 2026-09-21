@@ -9,6 +9,7 @@ import { supabase } from '../services/supabase';
 import { useAuth } from './AuthContext';
 import { useEmpresaAtiva } from '../hooks/useEmpresaAtiva';
 import { usePlano } from '../hooks/usePlano';
+import { CATEGORIAS } from '../utils/categorias';
 
 const AppContext = createContext(null);
 
@@ -17,6 +18,26 @@ export const useApp = () => {
   if (!ctx) throw new Error('useApp must be used within AppProvider');
   return ctx;
 };
+
+/**
+ * Valida se a categoria pertence ao tipo informado.
+ * Lança erro caso contrário, para impedir dados inválidos no banco.
+ */
+function validarCategoria(tipo, categoria) {
+  if (!tipo) {
+    throw new Error('Tipo é obrigatório.');
+  }
+  const categoriasValidas = CATEGORIAS[tipo] ?? [];
+  if (!categoriasValidas.length) {
+    throw new Error('Tipo de lançamento inválido.');
+  }
+  if (!categoria) {
+    throw new Error('Categoria é obrigatória.');
+  }
+  if (!categoriasValidas.includes(categoria)) {
+    throw new Error('Categoria incompatível com o tipo do lançamento.');
+  }
+}
 
 export function AppProvider({ children }) {
   const { user } = useAuth();
@@ -173,10 +194,12 @@ export function AppProvider({ children }) {
         throw new Error('Valor deve ser maior que zero.');
       }
 
+      validarCategoria(dados.tipo, dados.categoria);
+
       const nova = {
         empresa_id: empresaAtiva.id,
         tipo: dados.tipo,
-        categoria: dados.categoria || '',
+        categoria: dados.categoria,
         descricao: dados.descricao || '',
         valor_centavos: dados.valor_centavos,
         data: dados.data || new Date().toISOString().slice(0, 10),
@@ -205,6 +228,13 @@ export function AppProvider({ children }) {
 
   const atualizarMovimentacao = async (id, dados) => {
     try {
+      if (!dados.tipo) throw new Error('Tipo é obrigatório.');
+      if (!dados.valor_centavos || dados.valor_centavos <= 0) {
+        throw new Error('Valor deve ser maior que zero.');
+      }
+
+      validarCategoria(dados.tipo, dados.categoria);
+
       const { data, error } = await supabase
         .from('movimentacoes')
         .update({

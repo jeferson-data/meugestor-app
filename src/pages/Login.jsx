@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -7,6 +7,8 @@ import { Input } from '../components/ui/Input';
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const senhaAlterada = searchParams.get('senha-alterada') === '1';
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -45,6 +47,12 @@ export function Login() {
           Acesse a sua conta para gerir as finanças.
         </p>
 
+        {senhaAlterada && (
+          <div className="bg-brand-green/10 border border-brand-green text-brand-green text-sm rounded-xl px-4 py-3 mb-4">
+            Senha alterada com sucesso. Faça login com a nova senha.
+          </div>
+        )}
+
         {erro && (
           <div className="bg-brand-red/10 border border-brand-red text-brand-red text-sm rounded-xl px-4 py-3 mb-4">
             {erro}
@@ -68,6 +76,16 @@ export function Login() {
             placeholder="••••••••"
             required
           />
+
+          <div className="text-right -mt-2">
+            <Link
+              to="/esqueci-senha"
+              className="text-brand-green text-xs hover:underline"
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
+
           <Button type="submit" disabled={loading} className="w-full mt-2">
             {loading ? 'Aguarde...' : 'Entrar'}
           </Button>

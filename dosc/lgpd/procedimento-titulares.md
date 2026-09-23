@@ -81,3 +81,70 @@ Dependendo do tipo de pedido:
 - Arquivar o histórico
 
 ## Modelo de resposta — recebimento
+
+Olá, [NOME]!
+
+Recebemos sua solicitação de [tipo: acesso / correção / exclusão /
+portabilidade] referente aos dados da conta [E-MAIL].
+
+Vamos atender seu pedido em até 15 dias corridos, conforme a LGPD.
+
+Se precisarmos de alguma informação adicional, entraremos em contato
+por este mesmo e-mail.
+
+Equipe MeuGestor
+
+text
+
+## Modelo de resposta — atendido
+Olá, [NOME]!
+
+Sua solicitação de [tipo] foi atendida.
+
+[Descrever o que foi feito]
+
+Se tiver qualquer dúvida, é só responder este e-mail.
+
+Equipe MeuGestor
+
+text
+
+## Modelo de resposta — negado
+Olá, [NOME]!
+
+Analisamos sua solicitação de [tipo] e, infelizmente, não podemos
+atendê-la integralmente.
+
+Motivo: [explicar com base legal]
+
+[Se aplicável: informar o que pode ser feito]
+
+Se tiver qualquer dúvida, é só responder este e-mail.
+
+Equipe MeuGestor
+
+text
+
+## Registro de pedidos
+
+Manter planilha com:
+
+| Data do pedido | Nome | E-mail | Tipo | Prazo | Atendido em | Status |
+|----------------|------|--------|------|-------|-------------|--------|
+| _[data]_ | _[nome]_ | _[email]_ | _[tipo]_ | 15 dias | _[data]_ | _[status]_ |
+
+Essa planilha serve como prova de conformidade em caso de fiscalização.
+
+## Prazos
+
+- **Recebimento:** até 1 dia útil
+- **Resposta final:** até 15 dias corridos (LGPD art. 19)
+- **Casos complexos:** pode ser prorrogado, com justificativa ao titular
+
+## Quando consultar um advogado
+
+- Pedido de exclusão que envolva dados de terceiros
+- Questionamento sobre a legalidade de um tratamento
+- Notificação da ANPD
+- Incidente de segurança com risco relevante
+- Pedido de indenização por dano moral

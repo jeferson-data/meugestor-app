@@ -1,8 +1,3 @@
-import {
-  gerarExportacaoCompleta,
-  baixarArquivo,
-  nomeArquivoExportacao,
-} from '../utils/exportarDados';
 import React, {
   createContext,
   useContext,
@@ -15,6 +10,11 @@ import { useAuth } from './AuthContext';
 import { useEmpresaAtiva } from '../hooks/useEmpresaAtiva';
 import { usePlano } from '../hooks/usePlano';
 import { CATEGORIAS } from '../utils/categorias';
+import {
+  gerarExportacaoCompleta,
+  baixarArquivo,
+  nomeArquivoExportacao,
+} from '../utils/exportarDados';
 
 const AppContext = createContext(null);
 
@@ -26,7 +26,6 @@ export const useApp = () => {
 
 /**
  * Valida se a categoria pertence ao tipo informado.
- * Lança erro caso contrário, para impedir dados inválidos no banco.
  */
 function validarCategoria(tipo, categoria) {
   if (!tipo) {
@@ -207,7 +206,6 @@ export function AppProvider({ children }) {
       if (error) throw error;
       setConciliacoes(data || []);
     } catch (err) {
-      // A tabela pode não existir ainda em ambientes antigos; não quebra a app.
       console.warn('Erro ao carregar conciliações:', err?.message);
       setConciliacoes([]);
     }
@@ -316,12 +314,6 @@ export function AppProvider({ children }) {
   // ------------------------------------------------------------
   // Conciliação bancária (escrita)
   // ------------------------------------------------------------
-
-  /**
-   * Persiste a confirmação de um par (item do arquivo ↔ lançamento do sistema).
-   * Espera receber o objeto `par` devolvido por `conciliar()`:
-   *   { item: { data, descricao, valor_centavos }, movimentacao: { id, ... } }
-   */
   const confirmarConciliacao = async (par) => {
     try {
       if (!empresaAtiva) throw new Error('Nenhuma empresa ativa.');
@@ -358,10 +350,6 @@ export function AppProvider({ children }) {
     }
   };
 
-  /**
-   * Confirma vários pares em lote. Recebe um array de pares.
-   * Devolve { confirmados, falhas }.
-   */
   const confirmarConciliacoesEmLote = async (pares) => {
     if (!Array.isArray(pares) || !pares.length) {
       return { confirmados: 0, falhas: [] };
@@ -373,7 +361,6 @@ export function AppProvider({ children }) {
 
     for (const par of pares) {
       // Sequencial de propósito: garante ordem no audit_log
-      // e evita concorrência desnecessária no Supabase.
       // eslint-disable-next-line no-await-in-loop
       const res = await confirmarConciliacao(par);
       if (res.success) {
@@ -387,9 +374,6 @@ export function AppProvider({ children }) {
     return { confirmados, falhas, novasConciliacoes };
   };
 
-  /**
-   * Reverte uma conciliação (usada quando o usuário desfaz uma confirmação).
-   */
   const removerConciliacao = async (conciliacaoId) => {
     try {
       const { error } = await supabase
@@ -408,11 +392,6 @@ export function AppProvider({ children }) {
     }
   };
 
-  /**
-   * Devolve um Set com os IDs das movimentações já conciliadas.
-   * Útil para o Extrato mostrar o selo "✓ conciliado" sem varrer
-   * o array inteiro a cada render.
-   */
   const movimentacoesConciliadas = React.useMemo(() => {
     const set = new Set();
     for (const c of conciliacoes) {
@@ -421,14 +400,9 @@ export function AppProvider({ children }) {
     return set;
   }, [conciliacoes]);
 
-    // ------------------------------------------------------------
+  // ------------------------------------------------------------
   // Exportação de dados (LGPD art. 18)
   // ------------------------------------------------------------
-
-  /**
-   * Gera e dispara o download de todos os dados do titular.
-   * Registra a ação no audit_log.
-   */
   const exportarMeusDados = async () => {
     try {
       if (!perfil) throw new Error('Perfil não carregado.');
@@ -457,7 +431,6 @@ export function AppProvider({ children }) {
   // Value
   // ------------------------------------------------------------
   const value = {
-    // Perfil / empresas / plano
     perfil,
     empresas,
     empresaAtiva,
@@ -465,29 +438,22 @@ export function AppProvider({ children }) {
     plano,
     recursosPlano,
     loadingPlano,
-
-    // Dados
     movimentacoes,
     auditLog,
     conciliacoes,
     movimentacoesConciliadas,
     loading,
     erro,
-
-    // CRUD de movimentações
     adicionarMovimentacao,
     atualizarMovimentacao,
     removerMovimentacao,
     registarAuditLog,
     recarregarMovimentacoes: carregarMovimentacoes,
     recarregarPerfil: carregarPerfilEEmpresas,
-
-    // Conciliação
     confirmarConciliacao,
     confirmarConciliacoesEmLote,
     removerConciliacao,
     recarregarConciliacoes: carregarConciliacoes,
-    // ... tudo o que já está lá
     exportarMeusDados,
   };
 

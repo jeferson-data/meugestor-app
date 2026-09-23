@@ -1,3 +1,8 @@
+import {
+  gerarExportacaoCompleta,
+  baixarArquivo,
+  nomeArquivoExportacao,
+} from '../utils/exportarDados';
 import React, {
   createContext,
   useContext,

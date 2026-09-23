@@ -70,3 +70,146 @@ CREATE TABLE aceites_termos (
   ip TEXT,
   user_agent TEXT
 );
+Nota: esta tabela ainda precisa ser criada. Marcar como pendente
+no inventário.
+
+Quando o titular recusa
+Se o titular não aceitar os termos no primeiro acesso:
+
+Bloquear o uso do sistema até aceitar
+
+Oferecer opção de "excluir minha conta" (LGPD art. 18)
+
+Não usar os dados para nenhuma finalidade
+
+Mudança de versão dos documentos
+Quando os Termos ou a Política mudarem:
+
+Atualizar a versão do documento (ex.: 1.0 → 1.1)
+
+Notificar os usuários ativos por e-mail
+
+Solicitar novo aceite no próximo login
+
+Registrar o novo aceite com a nova versão
+
+Registros
+Data	Usuário	Empresa	Tipo	Versão	Aceito
+[data]	[nome]	[empresa]	termos_uso	1.0	✅
+[data]	[nome]	[empresa]	politica_privacidade	1.0	✅
+text
+
+---
+
+## 7. `docs/lgpd/ciclo-de-vida-dados.md`
+
+```markdown
+# Ciclo de Vida dos Dados
+
+**Versão:** 1.0
+**Data:** 2026-09-23
+
+Este documento descreve o ciclo de vida de cada dado pessoal no
+MeuGestor: quando é criado, por quanto tempo é usado, quando é
+arquivado e quando é eliminado.
+
+## Estados de um dado
+CRIADO → ATIVO → ARQUIVADO → EXPURGADO
+(retido) (eliminado)
+
+text
+
+## Ciclo de vida por categoria
+
+### Dados do responsável (nome, e-mail, telefone)
+
+| Fase | Quando | O que acontece |
+|------|--------|----------------|
+| **Criação** | Aprovação da solicitação | Cadastro em `usuarios` e `auth.users` |
+| **Ativo** | Enquanto a conta estiver ativa | Usado para login e comunicação |
+| **Cancelamento** | Cliente clica em "Cancelar conta" | Dados mantidos por 12 meses |
+| **Arquivamento** | Exclusão solicitada ou 12 meses após cancelamento | Nome e e-mail anonimizados |
+| **Expurgo** | 5 anos após arquivamento | Registro removido de `auth.users` |
+
+### Dados do operador (nome, e-mail, telefone)
+
+Mesmo ciclo do responsável.
+
+### Dados da empresa (razão social, CNPJ, endereço)
+
+| Fase | Quando | O que acontece |
+|------|--------|----------------|
+| **Criação** | Aprovação da solicitação | Cadastro em `empresas` |
+| **Ativo** | Enquanto a conta estiver ativa | Usado para identificação e cobrança |
+| **Cancelamento** | Cliente cancela | Mantido por 12 meses |
+| **Arquivamento** | Exclusão ou 12 meses | Mantido para fins fiscais |
+| **Expurgo** | 5 anos após arquivamento | Removido |
+
+### Movimentações (valor, data, categoria, descrição)
+
+| Fase | Quando | O que acontece |
+|------|--------|----------------|
+| **Criação** | Lançamento pelo usuário | Registro em `movimentacoes` |
+| **Ativo** | Enquanto a conta estiver ativa | Visível ao cliente |
+| **Cancelamento** | Cliente cancela | Mantido |
+| **Arquivamento** | Exclusão ou 12 meses | Marcado com `retida_ate` |
+| **Expurgo** | 5 anos após arquivamento | Removido |
+
+### Logs de auditoria
+
+| Fase | Quando | O que acontece |
+|------|--------|----------------|
+| **Criação** | Cada ação relevante | Registro em `audit_log` |
+| **Ativo** | 5 anos | Consultável pelo admin |
+| **Expurgo** | 5 anos | Removido |
+
+### Dados de vendedores
+
+| Fase | Quando | O que acontece |
+|------|--------|----------------|
+| **Criação** | Cadastro pelo admin | Registro em `vendedores` |
+| **Ativo** | Enquanto o vínculo durar | Usado para atribuição de pedidos |
+| **Arquivamento** | Fim do vínculo | Mantido |
+| **Expurgo** | 5 anos após fim do vínculo | Removido |
+
+### Registro de solicitação de exclusão
+
+| Fase | Quando | O que acontece |
+|------|--------|----------------|
+| **Criação** | Cliente solicita exclusão | Registro em `solicitacoes_exclusao` |
+| **Ativo** | Permanente | Prova de conformidade |
+| **Expurgo** | Nunca | Mantido para defesa jurídica |
+
+> **Nota:** o registro da solicitação de exclusão é mantido
+> permanentemente como prova de que o MeuGestor cumpriu a LGPD. Ele
+> contém apenas IDs (UUIDs) e observações, sem dados pessoais diretos.
+
+## Fluxo de transições automáticas
+
+O MeuGestor deve implementar (via pg_cron) as seguintes transições
+automáticas:
+
+| Transição | Prazo | Frequência do job |
+|-----------|-------|-------------------|
+| Empresa cancelada → arquivada | 12 meses após cancelamento | Diária |
+| Empresa arquivada → expurgada | 5 anos após arquivamento | Diária |
+| Movimentações → expurgadas | 5 anos após arquivamento | Diária |
+| Logs de auditoria → expurgados | 5 anos após criação | Diária |
+
+**Status:** ⚠️ não implementado ainda.
+
+## Backup e retenção
+
+- **Backup do Supabase:** diário, retido por 7 dias (plano padrão)
+- **Backup manual:** recomendado exportar mensalmente para armazenamento externo
+- **Backup de dados expurgados:** não é feito (expurgo é definitivo)
+
+## Revisão
+
+Este documento deve ser revisado sempre que:
+
+- Um novo dado pessoal for coletado
+- Um novo prazo legal for identificado
+- Uma nova tabela for criada
+
+**Última revisão:** 2026-09-23

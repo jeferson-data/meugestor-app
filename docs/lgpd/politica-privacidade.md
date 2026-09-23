@@ -135,4 +135,4 @@ serão resolvidas no foro da comarca de _[preencher: sua cidade]_.
 
 Para dúvidas sobre estes Termos:
 
-**E-mail:** _[e-mail do encarregado]_
+**E-mail:** _jefe.gomes@outlook.com_

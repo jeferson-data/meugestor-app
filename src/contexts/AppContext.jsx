@@ -421,6 +421,38 @@ export function AppProvider({ children }) {
     return set;
   }, [conciliacoes]);
 
+    // ------------------------------------------------------------
+  // Exportação de dados (LGPD art. 18)
+  // ------------------------------------------------------------
+
+  /**
+   * Gera e dispara o download de todos os dados do titular.
+   * Registra a ação no audit_log.
+   */
+  const exportarMeusDados = async () => {
+    try {
+      if (!perfil) throw new Error('Perfil não carregado.');
+      if (!empresaAtiva) throw new Error('Nenhuma empresa ativa.');
+
+      const conteudo = gerarExportacaoCompleta({
+        perfil,
+        empresa: empresaAtiva,
+        movimentacoes,
+        auditLog,
+      });
+
+      const nome = nomeArquivoExportacao(empresaAtiva.nome);
+      baixarArquivo(nome, conteudo);
+
+      await registarAuditLog('Exportou os próprios dados (LGPD)');
+
+      return { success: true, arquivo: nome };
+    } catch (err) {
+      console.error('Erro ao exportar dados:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
   // ------------------------------------------------------------
   // Value
   // ------------------------------------------------------------
@@ -455,6 +487,8 @@ export function AppProvider({ children }) {
     confirmarConciliacoesEmLote,
     removerConciliacao,
     recarregarConciliacoes: carregarConciliacoes,
+    // ... tudo o que já está lá
+    exportarMeusDados,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

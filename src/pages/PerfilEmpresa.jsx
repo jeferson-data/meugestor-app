@@ -7,7 +7,7 @@ import { Input } from '../components/ui/Input';
 import { Building2, Save } from 'lucide-react';
 
 export function PerfilEmpresa() {
-  const { empresaAtiva, recarregarPerfil } = useApp();
+  const { empresaAtiva, recarregarPerfil, exportarMeusDados } = useApp();
 
   const [form, setForm] = useState({
     nome: '',
@@ -20,6 +20,7 @@ export function PerfilEmpresa() {
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
   const [loading, setLoading] = useState(false);
+  const [exportando, setExportando] = useState(false);
 
   // Preenche o formulário com os dados da empresa ativa
   useEffect(() => {
@@ -69,6 +70,21 @@ export function PerfilEmpresa() {
       setLoading(false);
     }
   };
+
+  const handleExportar = async () => {
+  setErro('');
+  setSucesso('');
+  setExportando(true);
+  const res = await exportarMeusDados();
+  setExportando(false);
+
+  if (!res.success) {
+    setErro('Não foi possível exportar: ' + res.error);
+    return;
+  }
+  setSucesso('Download iniciado. Verifique a pasta de downloads.');
+};
+
 
   if (!empresaAtiva) {
     return (
@@ -145,6 +161,31 @@ export function PerfilEmpresa() {
           {loading ? 'A guardar...' : 'Guardar alterações'}
         </Button>
       </form>
+
+      {/* Exportação de dados (LGPD) */}
+<div className="mt-8 p-5 bg-brand-card border border-brand-border rounded-2xl">
+  <h2 className="font-bold mb-1 flex items-center gap-2">
+    <Download size={18} className="text-brand-green" />
+    Meus dados
+  </h2>
+  <p className="text-brand-muted text-sm mb-4">
+    Baixe uma cópia de todos os seus dados guardados no MeuGestor,
+    em formato CSV. Inclui seus dados pessoais, os dados da empresa,
+    todas as movimentações e o histórico de atividades.
+  </p>
+  <button
+    type="button"
+    onClick={handleExportar}
+    disabled={exportando}
+    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-brand-green text-brand-green hover:bg-brand-green/10 transition text-sm font-semibold disabled:opacity-40"
+  >
+    <Download size={16} />
+    {exportando ? 'A preparar...' : 'Baixar cópia dos meus dados'}
+  </button>
+  <p className="text-brand-subtle text-xs mt-3">
+    Base legal: LGPD, art. 18, II e V — direito de acesso e portabilidade.
+  </p>
+</div>
 
       <div className="mt-8 p-4 bg-brand-card border border-brand-border rounded-xl text-xs text-brand-muted">
         <strong className="text-brand-text block mb-1">

@@ -1,5 +1,11 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { Layout } from './components/layout/Layout';
@@ -34,7 +40,13 @@ function RotaProtegida() {
   if (!user) return <Navigate to="/login" replace />;
 
   const isAdmin = ['admin_programa', 'dono_programa'].includes(perfil?.role);
-  if (!isAdmin && empresaAtiva?.status_acesso === 'suspenso') {
+
+  // Bloqueia acesso para empresas suspensas ou arquivadas
+  const bloqueada = ['suspenso', 'suspensa', 'arquivada'].includes(
+    empresaAtiva?.status_acesso
+  );
+
+  if (!isAdmin && bloqueada) {
     return <ContaSuspensa />;
   }
 
@@ -42,7 +54,6 @@ function RotaProtegida() {
 }
 
 // Rota pública que redireciona o usuário logado para o Dashboard.
-// Usada apenas em /login.
 function RotaPublica() {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -78,7 +89,7 @@ function AppRoutes() {
         <Route path="/redefinir-senha" element={<RedefinirSenha />} />
       </Route>
 
-      {/* Contratar — já existia, mantida como estava */}
+      {/* Contratar — pública */}
       <Route path="/contratar" element={<Contratar />} />
 
       {/* Protegidas */}

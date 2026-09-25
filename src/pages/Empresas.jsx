@@ -449,4 +449,220 @@ export function Empresas() {
                   Plano inicial
                 </label>
                 <select
-                  value={form
+                  value={form.plano_id}
+                  onChange={(e) =>
+                    setForm({ ...form, plano_id: e.target.value })
+                  }
+                  className="w-full px-4 py-3 rounded-xl bg-[#1A2A44] border border-brand-border text-brand-text focus:outline-none focus:border-brand-green"
+                >
+                  {planos.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nome} — R$ {(p.valor_centavos / 100).toFixed(2)}/mês
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <Button type="submit" disabled={loading} className="w-full mt-2">
+                {loading ? 'A criar...' : 'Criar empresa'}
+              </Button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================
+          MODAL ALTERAR PLANO
+      ============================================================ */}
+      {alterarPlano && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-brand-card border border-brand-green rounded-2xl p-6">
+            <div className="flex justify-between items-center mb-1">
+              <h2 className="text-xl font-bold">Alterar plano</h2>
+              <button
+                onClick={fecharAlterarPlano}
+                className="text-brand-muted hover:text-brand-red"
+              >
+                <X size={22} />
+              </button>
+            </div>
+            <p className="text-brand-muted text-sm mb-4">
+              Empresa:{' '}
+              <strong className="text-brand-text">{alterarPlano.nome}</strong>
+            </p>
+
+            {assinaturas[alterarPlano.id] && (
+              <div className="bg-brand-darker border border-brand-border rounded-xl p-3 mb-4 text-sm">
+                <div className="text-brand-muted text-xs uppercase tracking-wide mb-1">
+                  Plano atual
+                </div>
+                <div className="font-bold">
+                  {assinaturas[alterarPlano.id].plano_nome} —{' '}
+                  <span className="text-brand-green">
+                    R${' '}
+                    {(
+                      assinaturas[alterarPlano.id].valor_centavos / 100
+                    ).toFixed(2)}
+                    /mês
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {erroPlano && (
+              <div className="bg-brand-red/10 border border-brand-red text-brand-red text-sm rounded-xl px-4 py-3 mb-4">
+                {erroPlano}
+              </div>
+            )}
+
+            <form onSubmit={handleAlterarPlano} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-brand-muted mb-2">
+                  Novo plano
+                </label>
+                <select
+                  value={novoPlanoId}
+                  onChange={(e) => setNovoPlanoId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-[#1A2A44] border border-brand-border text-brand-text focus:outline-none focus:border-brand-green"
+                >
+                  {planos.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nome} — R$ {(p.valor_centavos / 100).toFixed(2)}/mês
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <p className="text-brand-subtle text-xs">
+                A assinatura atual será cancelada e uma nova com o plano
+                escolhido será criada. O histórico fica guardado.
+              </p>
+
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="flex-1"
+                  onClick={fecharAlterarPlano}
+                  disabled={salvandoPlano}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={salvandoPlano}
+                >
+                  {salvandoPlano ? 'A guardar...' : 'Alterar plano'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================
+          MODAL CONFIRMAR REMOÇÃO (arquivamento)
+      ============================================================ */}
+      {confirmarRemocao && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-brand-card border border-brand-red rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold mb-3 text-brand-red">
+              Excluir empresa permanentemente
+            </h2>
+
+            <p className="text-brand-muted text-sm mb-4">
+              Tem a certeza que quer excluir{' '}
+              <strong className="text-brand-text">
+                {confirmarRemocao.nome}
+              </strong>
+              ?
+            </p>
+
+            <div className="bg-brand-darker border border-brand-border rounded-xl p-3 mb-4 text-xs text-brand-muted space-y-2">
+              <p className="font-bold text-brand-text mb-1">
+                O que vai acontecer:
+              </p>
+              <p>
+                🔒{' '}
+                <strong className="text-brand-text">Anonimização:</strong> os
+                dados pessoais dos utilizadores serão substituídos por
+                identificadores anônimos. O cliente perde o acesso
+                imediatamente.
+              </p>
+              <p>
+                📁 <strong className="text-brand-text">Arquivamento:</strong> a
+                empresa sai da lista, mas permanece no banco com status
+                "arquivada".
+              </p>
+              <p>
+                ⏳{' '}
+                <strong className="text-brand-text">Retenção fiscal:</strong>{' '}
+                as movimentações são mantidas anonimizadas por{' '}
+                <strong className="text-brand-text">5 anos</strong>, conforme
+                exigência do Código Tributário Nacional. Depois desse prazo,
+                são apagadas de vez.
+              </p>
+              <p className="text-brand-subtle pt-1">
+                Esta ação é <strong>irreversível</strong>.
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-semibold text-brand-muted mb-2">
+                Motivo da exclusão (opcional)
+              </label>
+              <input
+                type="text"
+                value={motivoExclusao}
+                onChange={(e) => setMotivoExclusao(e.target.value)}
+                placeholder="Ex: pedido do cliente, inadimplência, encerramento"
+                className="w-full px-4 py-3 rounded-xl bg-[#1A2A44] border border-brand-border text-brand-text focus:outline-none focus:border-brand-red text-sm"
+              />
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-xs font-semibold text-brand-muted mb-2">
+                Digite{' '}
+                <strong className="text-brand-red">
+                  {confirmarRemocao.nome}
+                </strong>{' '}
+                para confirmar
+              </label>
+              <input
+                type="text"
+                value={textoConfirmacao}
+                onChange={(e) => setTextoConfirmacao(e.target.value)}
+                placeholder={confirmarRemocao.nome}
+                autoComplete="off"
+                className="w-full px-4 py-3 rounded-xl bg-[#1A2A44] border border-brand-border text-brand-text focus:outline-none focus:border-brand-red text-sm"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={fecharConfirmarRemocao}
+                disabled={removendo}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="danger"
+                className="flex-1"
+                onClick={handleRemover}
+                disabled={
+                  removendo ||
+                  textoConfirmacao.trim() !== confirmarRemocao.nome
+                }
+              >
+                {removendo ? 'A excluir...' : 'Excluir definitivamente'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

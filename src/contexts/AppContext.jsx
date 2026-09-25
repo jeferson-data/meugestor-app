@@ -15,6 +15,11 @@ import {
   baixarArquivo,
   nomeArquivoExportacao,
 } from '../utils/exportarDados';
+import {
+  calcularExpurgo,
+  emailAnonimo,
+  NOME_ANONIMO,
+} from '../utils/cicloDeVida';
 
 const AppContext = createContext(null);
 
@@ -89,6 +94,7 @@ export function AppProvider({ children }) {
         const { data: todas, error: errTodas } = await supabase
           .from('empresas')
           .select('*')
+          .neq('status_acesso', 'arquivada')
           .order('nome');
         if (errTodas) throw errTodas;
         lista = todas || [];
@@ -101,7 +107,7 @@ export function AppProvider({ children }) {
 
         lista = (vinculos || [])
           .map((v) => (v.empresas ? { ...v.empresas, papel: v.papel } : null))
-          .filter(Boolean);
+          .filter((e) => e && e.status_acesso !== 'arquivada');
       }
 
       setEmpresas(lista);
@@ -360,7 +366,6 @@ export function AppProvider({ children }) {
     const novasConciliacoes = [];
 
     for (const par of pares) {
-      // Sequencial de propósito: garante ordem no audit_log
       // eslint-disable-next-line no-await-in-loop
       const res = await confirmarConciliacao(par);
       if (res.success) {
@@ -428,6 +433,114 @@ export function AppProvider({ children }) {
   };
 
   // ------------------------------------------------------------
+  // Arquivamento de empresa (LGPD + retenção fiscal)
+  // ------------------------------------------------------------
+  const arquivarEmpresa = async (empresaId, motivo = '') => {
+    try {
+      if (!perfil) throw new Error('Perfil não carregado.');
+      if (!['admin_programa', 'dono_programa'].includes(perfil.role)) {
+        throw new Error('Apenas o administrador pode arquivar empresas.');
+      }
+
+      const empresa = empresas.find((e) => e.id === empresaId);
+      if (!empresa) throw new Error('Empresa não encontrada.');
+
+      const expurgo = calcularExpurgo();
+      const agora = new Date().toISOString();
+
+      // 1. Anonimizar usuários vinculados
+      const { data: vinculos, error: errVinc } = await supabase
+        .from('user_empresas')
+        .select('usuario_id')
+        .eq('empresa_id', empresaId);
+
+      if (errVinc) throw errVinc;
+
+      const usuarioIds = (vinculos || []).map((v) => v.usuario_id);
+
+      for (const uid of usuarioIds) {
+        // eslint-disable-next-line no-await-in-loop
+        await supabase
+          .from('usuarios')
+          .update({
+            nome: NOME_ANONIMO,
+            email: emailAnonimo(uid),
+            telefone: null,
+            anonimizado_em: agora,
+            motivo_exclusao: motivo || 'empresa arquivada pelo administrador',
+          })
+          .eq('id', uid);
+      }
+
+      // 2. Encerrar assinatura ativa
+      await supabase
+        .from('assinaturas')
+        .update({ status: 'cancelado', fim_contrato: agora.slice(0, 10) })
+        .eq('empresa_id', empresaId)
+        .eq('status', 'ativo');
+
+      // 3. Cancelar pagamentos pendentes
+      await supabase
+        .from('pagamentos')
+        .update({ status: 'cancelado' })
+        .eq('empresa_id', empresaId)
+        .eq('status', 'pendente');
+
+      // 4. Marcar movimentações para retenção fiscal
+      await supabase
+        .from('movimentacoes')
+        .update({ retida_ate: expurgo })
+        .eq('empresa_id', empresaId);
+
+      // 5. Arquivar a empresa
+      const { error: errEmp } = await supabase
+        .from('empresas')
+        .update({
+          status_acesso: 'arquivada',
+          arquivada_em: agora,
+          expurgo_em: expurgo,
+          motivo_exclusao: motivo || 'arquivada pelo administrador',
+        })
+        .eq('id', empresaId);
+
+      if (errEmp) throw errEmp;
+
+      // 6. Registrar em solicitacoes_exclusao
+      await supabase.from('solicitacoes_exclusao').insert([
+        {
+          empresa_id: empresaId,
+          empresa_nome: empresa.nome,
+          usuario_id: perfil.id,
+          usuario_nome: perfil.nome,
+          motivo: motivo || 'arquivada pelo administrador',
+          expurgo_em: expurgo,
+          status: 'arquivada',
+        },
+      ]);
+
+      // 7. Audit log
+      await registarAuditLog(
+        `Arquivou a empresa "${empresa.nome}" (retenção fiscal até ${new Date(
+          expurgo
+        ).toLocaleDateString('pt-BR')})`
+      );
+
+      // 8. Limpar empresa ativa se era esta
+      if (empresaAtiva?.id === empresaId) {
+        localStorage.removeItem('meugestor_empresa_ativa');
+      }
+
+      // 9. Recarregar lista
+      await carregarPerfilEEmpresas();
+
+      return { success: true };
+    } catch (err) {
+      console.error('Erro ao arquivar empresa:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  // ------------------------------------------------------------
   // Value
   // ------------------------------------------------------------
   const value = {
@@ -455,6 +568,7 @@ export function AppProvider({ children }) {
     removerConciliacao,
     recarregarConciliacoes: carregarConciliacoes,
     exportarMeusDados,
+    arquivarEmpresa,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

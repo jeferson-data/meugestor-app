@@ -31,7 +31,9 @@ Aplicação web para controle de fluxo de caixa, movimentações, pagamentos e g
 
 ## 🖼️ Preview
 
-*(Adicione aqui um print do dashboard. Se quiser, tire um print da tela inicial e suba como `preview.png` no repositório.)*
+![Dashboard do MeuGestor](docs/dashboard-meugestor.png)
+
+*Dashboard com indicadores financeiros, evolução de saldo e ranking de despesas e receitas.*
 
 ---
 

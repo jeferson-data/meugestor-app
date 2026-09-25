@@ -6,12 +6,18 @@ import { Input } from '../components/ui/Input';
 import { Building2, Plus, X, Trash2, RefreshCcw } from 'lucide-react';
 
 export function Empresas() {
-  const { empresas, empresaAtiva, trocarEmpresa, perfil, recarregarPerfil } =
-    useApp();
+  const {
+    empresas,
+    empresaAtiva,
+    trocarEmpresa,
+    perfil,
+    recarregarPerfil,
+    arquivarEmpresa,
+  } = useApp();
   const isAdmin = ['admin_programa', 'dono_programa'].includes(perfil?.role);
 
   const [planos, setPlanos] = useState([]);
-  const [assinaturas, setAssinaturas] = useState({}); // { empresa_id: { plano_nome, valor_centavos, fim_contrato, status } }
+  const [assinaturas, setAssinaturas] = useState({});
   const [loadingPlanos, setLoadingPlanos] = useState(true);
 
   // Modal Nova Empresa
@@ -35,6 +41,8 @@ export function Empresas() {
 
   // Modal Remover
   const [confirmarRemocao, setConfirmarRemocao] = useState(null);
+  const [motivoExclusao, setMotivoExclusao] = useState('');
+  const [textoConfirmacao, setTextoConfirmacao] = useState('');
   const [removendo, setRemovendo] = useState(false);
 
   // ------------------------------------------------------------
@@ -43,7 +51,6 @@ export function Empresas() {
   const carregarDados = async () => {
     setLoadingPlanos(true);
     try {
-      // Planos
       const { data: planosData } = await supabase
         .from('planos')
         .select('*')
@@ -51,10 +58,11 @@ export function Empresas() {
         .order('valor_centavos');
       setPlanos(planosData || []);
 
-      // Assinaturas ativas de todas as empresas
       const { data: assinData } = await supabase
         .from('assinaturas')
-        .select('empresa_id, valor_centavos, fim_contrato, status, planos:plano_id (nome)')
+        .select(
+          'empresa_id, valor_centavos, fim_contrato, status, planos:plano_id (nome)'
+        )
         .eq('status', 'ativo');
 
       const mapa = {};
@@ -209,31 +217,40 @@ export function Empresas() {
   };
 
   // ------------------------------------------------------------
-  // Remover empresa
+  // Remover empresa (arquivamento com retenção fiscal)
   // ------------------------------------------------------------
+  const abrirConfirmarRemocao = (empresa) => {
+    setConfirmarRemocao(empresa);
+    setMotivoExclusao('');
+    setTextoConfirmacao('');
+  };
+
+  const fecharConfirmarRemocao = () => {
+    setConfirmarRemocao(null);
+    setMotivoExclusao('');
+    setTextoConfirmacao('');
+  };
+
   const handleRemover = async () => {
     if (!confirmarRemocao) return;
-    setRemovendo(true);
-    try {
-      const { error } = await supabase
-        .from('empresas')
-        .delete()
-        .eq('id', confirmarRemocao.id);
 
-      if (error) throw error;
-
-      if (empresaAtiva?.id === confirmarRemocao.id) {
-        localStorage.removeItem('meugestor_empresa_ativa');
-      }
-
-      setConfirmarRemocao(null);
-      await recarregarPerfil();
-      await carregarDados();
-    } catch (err) {
-      alert('Erro ao remover empresa: ' + err.message);
-    } finally {
-      setRemovendo(false);
+    if (textoConfirmacao.trim() !== confirmarRemocao.nome) {
+      alert('O nome digitado não corresponde ao nome da empresa.');
+      return;
     }
+
+    setRemovendo(true);
+    const res = await arquivarEmpresa(confirmarRemocao.id, motivoExclusao);
+    setRemovendo(false);
+
+    if (!res.success) {
+      alert('Erro ao arquivar empresa: ' + res.error);
+      return;
+    }
+
+    fecharConfirmarRemocao();
+    await recarregarPerfil();
+    await carregarDados();
   };
 
   // ------------------------------------------------------------
@@ -287,26 +304,32 @@ export function Empresas() {
                   : 'border-brand-border hover:border-brand-muted'
               }`}
             >
-              {/* Info empresa */}
               <div className="flex items-start gap-4 min-w-0 flex-1">
-                <Building2 className="text-brand-green flex-shrink-0 mt-1" size={28} />
+                <Building2
+                  className="text-brand-green flex-shrink-0 mt-1"
+                  size={28}
+                />
                 <div className="min-w-0">
                   <div className="font-bold truncate">{e.nome}</div>
                   <div className="text-brand-muted text-sm">
                     {e.cnpj || 'Sem CNPJ'}
                   </div>
 
-                  {/* Plano contratado */}
                   {ass ? (
                     <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-                      <span className={`font-bold uppercase tracking-wide ${corPlano(ass.plano_nome)}`}>
+                      <span
+                        className={`font-bold uppercase tracking-wide ${corPlano(
+                          ass.plano_nome
+                        )}`}
+                      >
                         Plano {ass.plano_nome}
                       </span>
                       <span className="text-brand-text font-semibold">
                         R$ {(ass.valor_centavos / 100).toFixed(2)}/mês
                       </span>
                       <span className="text-brand-subtle">
-                        até {new Date(ass.fim_contrato).toLocaleDateString('pt-BR')}
+                        até{' '}
+                        {new Date(ass.fim_contrato).toLocaleDateString('pt-BR')}
                       </span>
                     </div>
                   ) : (
@@ -315,14 +338,12 @@ export function Empresas() {
                     </div>
                   )}
 
-                  {/* Status de acesso */}
                   {e.status_acesso === 'suspenso' && (
                     <div className="text-brand-red text-xs mt-1 font-semibold">
                       🔒 Acesso suspenso
                     </div>
                   )}
 
-                  {/* Papel do utilizador atual */}
                   {e.papel && (
                     <div className="text-brand-subtle text-xs mt-1">
                       O seu papel: {e.papel}
@@ -331,7 +352,6 @@ export function Empresas() {
                 </div>
               </div>
 
-              {/* Ações */}
               <div className="flex items-center gap-3 flex-shrink-0 md:self-center">
                 {!isAtiva ? (
                   <button
@@ -354,9 +374,9 @@ export function Empresas() {
                       <RefreshCcw size={18} />
                     </button>
                     <button
-                      onClick={() => setConfirmarRemocao(e)}
+                      onClick={() => abrirConfirmarRemocao(e)}
                       className="text-brand-muted hover:text-brand-red transition p-2 rounded-lg"
-                      title="Remover empresa"
+                      title="Excluir empresa"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -429,166 +449,4 @@ export function Empresas() {
                   Plano inicial
                 </label>
                 <select
-                  value={form.plano_id}
-                  onChange={(e) =>
-                    setForm({ ...form, plano_id: e.target.value })
-                  }
-                  className="w-full px-4 py-3 rounded-xl bg-[#1A2A44] border border-brand-border text-brand-text focus:outline-none focus:border-brand-green"
-                >
-                  {planos.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nome} — R$ {(p.valor_centavos / 100).toFixed(2)}/mês
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <Button type="submit" disabled={loading} className="w-full mt-2">
-                {loading ? 'A criar...' : 'Criar empresa'}
-              </Button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================
-          MODAL ALTERAR PLANO
-      ============================================================ */}
-      {alterarPlano && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-brand-card border border-brand-green rounded-2xl p-6">
-            <div className="flex justify-between items-center mb-1">
-              <h2 className="text-xl font-bold">Alterar plano</h2>
-              <button
-                onClick={fecharAlterarPlano}
-                className="text-brand-muted hover:text-brand-red"
-              >
-                <X size={22} />
-              </button>
-            </div>
-            <p className="text-brand-muted text-sm mb-4">
-              Empresa: <strong className="text-brand-text">{alterarPlano.nome}</strong>
-            </p>
-
-            {/* Plano atual */}
-            {assinaturas[alterarPlano.id] && (
-              <div className="bg-brand-darker border border-brand-border rounded-xl p-3 mb-4 text-sm">
-                <div className="text-brand-muted text-xs uppercase tracking-wide mb-1">
-                  Plano atual
-                </div>
-                <div className="font-bold">
-                  {assinaturas[alterarPlano.id].plano_nome} —{' '}
-                  <span className="text-brand-green">
-                    R$ {(assinaturas[alterarPlano.id].valor_centavos / 100).toFixed(2)}/mês
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {erroPlano && (
-              <div className="bg-brand-red/10 border border-brand-red text-brand-red text-sm rounded-xl px-4 py-3 mb-4">
-                {erroPlano}
-              </div>
-            )}
-
-            <form onSubmit={handleAlterarPlano} className="flex flex-col gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-brand-muted mb-2">
-                  Novo plano
-                </label>
-                <select
-                  value={novoPlanoId}
-                  onChange={(e) => setNovoPlanoId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-[#1A2A44] border border-brand-border text-brand-text focus:outline-none focus:border-brand-green"
-                >
-                  {planos.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nome} — R$ {(p.valor_centavos / 100).toFixed(2)}/mês
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <p className="text-brand-subtle text-xs">
-                A assinatura atual será cancelada e uma nova com o plano
-                escolhido será criada. O histórico fica guardado.
-              </p>
-
-              <div className="flex gap-3">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="flex-1"
-                  onClick={fecharAlterarPlano}
-                  disabled={salvandoPlano}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex-1"
-                  disabled={salvandoPlano}
-                >
-                  {salvandoPlano ? 'A guardar...' : 'Alterar plano'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================
-          MODAL CONFIRMAR REMOÇÃO
-      ============================================================ */}
-      {confirmarRemocao && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-brand-card border border-brand-red rounded-2xl p-6">
-            <h2 className="text-xl font-bold mb-3 text-brand-red">
-              Remover empresa
-            </h2>
-
-            <p className="text-brand-muted text-sm mb-4">
-              Tem a certeza que quer remover{' '}
-              <strong className="text-brand-text">
-                {confirmarRemocao.nome}
-              </strong>
-              ? Esta ação é <strong className="text-brand-red">permanente</strong> e apaga:
-            </p>
-
-            <ul className="text-brand-muted text-sm mb-4 list-disc pl-5 space-y-1">
-              <li>Movimentações da empresa</li>
-              <li>Assinatura e histórico de pagamentos</li>
-              <li>Vínculos de utilizadores com a empresa</li>
-              <li>Contas bancárias e transações</li>
-              <li>Trilha de auditoria</li>
-            </ul>
-
-            <p className="text-brand-subtle text-xs mb-5">
-              Os utilizadores da empresa não são apagados — apenas ficam sem
-              vínculo com esta empresa.
-            </p>
-
-            <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                className="flex-1"
-                onClick={() => setConfirmarRemocao(null)}
-                disabled={removendo}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="danger"
-                className="flex-1"
-                onClick={handleRemover}
-                disabled={removendo}
-              >
-                {removendo ? 'A remover...' : 'Remover empresa'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+                  value={form

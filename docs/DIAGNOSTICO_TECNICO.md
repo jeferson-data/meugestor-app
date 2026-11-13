@@ -173,3 +173,92 @@ O diagnóstico será considerado concluído quando:
 ## 11. Próxima decisão
 
 Não alterar regras de negócio nem refatorar funcionalidades nesta fase. Primeiro concluir o diagnóstico e registrar as decisões. Depois, revisar o README e iniciar a especificação formal do produto e dos requisitos.
+
+
+## 12. Evidências adicionais — contextos, autenticação e movimentações
+
+Após a primeira versão deste documento, foram inspecionados também:
+
+- `src/contexts/AuthContext.jsx`
+- `src/contexts/AppContext.jsx`
+- `src/services/supabase.js`
+- `src/pages/Dashboard.jsx`
+- `src/hooks/usePlano.js`
+- `index.html`
+- `tailwind.config.js`
+
+### 12.1 Autenticação
+
+O contexto de autenticação utiliza Supabase Auth para:
+
+- Recuperar a sessão existente;
+- Escutar alterações de autenticação;
+- Entrar com e-mail e senha;
+- Criar usuário com metadado de nome;
+- Encerrar sessão.
+
+O cliente Supabase configura persistência de sessão, renovação automática do token e detecção de sessão na URL.
+
+**Ponto de validação:** revisar fluxo de confirmação de e-mail, recuperação de senha, redefinição, expiração de sessão e tratamento de falhas. O código do contexto, isoladamente, não comprova a segurança das políticas do banco.
+
+### 12.2 Contexto da aplicação e isolamento por empresa
+
+O `AppContext` carrega perfil na tabela `usuarios`, vínculos na tabela `user_empresas` e empresas na tabela `empresas`. Para perfis `admin_programa` e `dono_programa`, a consulta carrega empresas não arquivadas; para os demais perfis, utiliza os vínculos do usuário.
+
+As consultas de movimentações, auditoria e conciliações filtram pelo identificador da empresa ativa.
+
+**Ponto de validação prioritário:** filtros no frontend não substituem políticas RLS. Precisamos inspecionar políticas e testar com contas distintas se todas as tabelas e operações impedem acesso cruzado.
+
+### 12.3 Movimentações
+
+O contexto valida tipo, categoria e valor positivo antes de inserir ou atualizar movimentações. Os valores são armazenados em centavos (`valor_centavos`). O lançamento inclui empresa, tipo, categoria, descrição, data, status e nome de quem lançou.
+
+O código permite atualizar e excluir movimentações. A exclusão também remove do estado local as conciliações associadas à movimentação.
+
+**Riscos a investigar:** trilha histórica de alterações/exclusões, permissões por papel, integridade referencial, regras para movimentações já conciliadas e prevenção de alteração indevida de períodos fechados.
+
+### 12.4 Auditoria e conciliação
+
+O código registra eventos de lançamento, atualização, exclusão e conciliação por meio da tabela `audit_log`. Entretanto, a função de registro captura falhas e apenas emite aviso no console; a operação de negócio pode ser concluída mesmo se o registro de auditoria falhar.
+
+A conciliação grava dados do item importado e da movimentação associada, com status `conciliado`. A conciliação em lote processa os pares sequencialmente e acumula sucessos e falhas.
+
+**Pontos prioritários:** verificar se a auditoria é obrigatória para operações críticas, se pode ser alterada pelo cliente, se existe trilha imutável no banco e se a conciliação impede duplicidade, divergência de valores ou associação de movimentação pertencente a outra empresa. Verificar também se operações compostas precisam de transação no backend.
+
+### 12.5 Dashboard e semântica dos indicadores
+
+O Dashboard calcula:
+
+- Receita paga e despesa paga a partir das movimentações carregadas;
+- Resultado como receita paga menos despesa paga;
+- Margem como resultado dividido pela receita paga, quando a receita é positiva;
+- Contas a receber e pagar a partir de movimentações pendentes;
+- Indicador “Saldo Acumulado” com a mesma fórmula do resultado.
+
+A fórmula observada para “Saldo Acumulado” é resultado líquido das movimentações pagas carregadas, não uma leitura comprovada de saldo bancário. O nome e a abrangência temporal precisam ser revistos para evitar interpretação equivocada pelo usuário.
+
+**Ponto de validação:** confirmar carregamento de todo o histórico ou existência de paginação/limites, critérios de datas, cancelamentos/estornos e comportamento em períodos sem dados.
+
+### 12.6 Ciclo de vida e privacidade
+
+O contexto contém rotinas relacionadas à exportação de dados e ao arquivamento de empresa. A exportação é comentada no código como relacionada ao art. 18 da LGPD. O arquivamento, conforme o trecho inspecionado, anonimiza usuários vinculados, encerra assinatura ativa, cancela pagamentos pendentes, marca movimentações para retenção e altera o status da empresa.
+
+No trecho consultado, várias operações intermediárias de atualização não verificam explicitamente o erro retornado pelo Supabase antes de seguir para a próxima etapa. Isso pode produzir execução parcial. Não foi possível concluir, apenas pelo trecho, se há funções adicionais, políticas ou mecanismos compensatórios.
+
+**Ponto prioritário:** revisar o fluxo completo, validar base legal, prazos de retenção, dados afetados e requisitos de exclusão/anonimização. Não considerar a implementação como comprovação de conformidade legal.
+
+## 13. Priorização preliminar orientada à viabilidade comercial
+
+| Prioridade | Tema | Por que importa |
+|---|---|---|
+| P0 — bloqueador comercial | RLS e isolamento entre empresas | Dados financeiros de clientes diferentes não podem ser expostos entre si |
+| P0 — bloqueador comercial | Integridade de movimentações e conciliação | Valores incorretos comprometem confiança e decisões |
+| P0 — bloqueador comercial | Permissões por papel e autorização no banco | Ações administrativas precisam ser protegidas no servidor/banco |
+| P1 — alta | Auditoria confiável e histórico de alterações | Permite investigar erros e dar suporte |
+| P1 — alta | Arquivamento, retenção e exclusão de dados | Evita perda parcial e riscos no ciclo de vida dos dados |
+| P1 — alta | Testes automatizados dos cálculos financeiros | Reduz regressões em operações sensíveis |
+| P1 — alta | Recuperação de falhas, logs e suporte | Necessário para operar um serviço pago |
+| P2 — evolução | Usabilidade, onboarding e experiência mobile | Afeta adoção e retenção dos pequenos negócios |
+
+As prioridades são hipóteses iniciais de risco e devem ser confirmadas após inspeção do banco, das políticas e dos fluxos completos.
+

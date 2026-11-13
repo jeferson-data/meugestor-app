@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
   }
 
   let vendedorId: string | null = null;
-  let admin: ReturnType<typeof createClient> | null = null;
+  let admin: ReturnType<typeof createClient<Database>> | null = null;
 
   try {
     // 1. Verificar autenticação

@@ -27,3 +27,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Schema original privado - nao versionar
+/docs/arquitetura/schema_original.sql

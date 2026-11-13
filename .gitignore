@@ -30,3 +30,6 @@ dist-ssr
 
 # Schema original privado - nao versionar
 /docs/arquitetura/schema_original.sql
+
+# Schema original privado - nao versionar
+/docs/arquitetura/schema_original.sql

@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     }
 
     // Cliente utilizado somente para validar o JWT
-    const autenticacao = createClient(supabaseUrl, anonKey, {
+    const autenticacao = createClient<Database>(supabaseUrl, anonKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
     }
 
     // 3. Criar cliente administrativo no servidor
-    admin = createClient(supabaseUrl, serviceRoleKey, {
+    admin = createClient<Database>(supabaseUrl, serviceRoleKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,

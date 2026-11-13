@@ -14,7 +14,7 @@ tabela abaixo para ir direto ao ponto.
 | Se você é... | Comece por |
 |--------------|------------|
 | **Novo no projeto** | [Visão geral do produto](produto/visao-geral.md) |
-| **Desenvolvedor** | [Arquitetura técnica](tecnica/arquitetura.md) e [Banco de dados](tecnica/banco-de-dados.md) |
+| **Desenvolvedor** | [Arquitetura técnica](tecnica/arquitetura.md), [Modelo do banco](arquitetura/BANCO_DE_DADOS.md) e [Revisão do banco](arquitetura/REVISAO_BANCO_DADOS.md) |
 | **Cliente / usuário final** | [Manual do usuário](manual/README.md) |
 | **Administrador do sistema** | [Manual interno](manual-interno/README.md) |
 | **Encarregado de dados (DPO)** | [Documentação LGPD](lgpd/00-LEIA-ME.md) |
@@ -36,7 +36,7 @@ docs/
 │ ├── fluxos.md
 │ └── regras-de-negocio.md
 │
-├── tecnica/ ← Como o código está montado
+├── tecnica/ ← Guias operacionais de desenvolvimento
 │ ├── arquitetura.md
 │ ├── banco-de-dados.md
 │ ├── rodando-localmente.md
@@ -55,7 +55,7 @@ docs/
 ├── manual-interno/ ← Manual do administrador
 │ └── README.md
 │
-└── lgpd/ ← Conformidade com a LGPD
+├── arquitetura/ ← Modelo de dados e revisão técnica\n│ ├── BANCO_DE_DADOS.md\n│ └── REVISAO_BANCO_DADOS.md\n│\n├── engenharia/ ← Diagnósticos, segurança e qualidade\n│ └── DIAGNOSTICO_TECNICO.md\n│\n└── lgpd/ ← Conformidade com a LGPD
 ├── 00-LEIA-ME.md
 ├── inventario-pii.md
 ├── base-legal.md
@@ -120,7 +120,7 @@ docs/
 
 ## Convenções
 
-- Todos os documentos estão em **Markdown** (`.md`).
+- Todos os documentos estão em **Markdown** (`.md`).\n- Documentos de produto, arquitetura e engenharia ficam separados por assunto; guias de execução local e deploy permanecem em `tecnica/`.
 - O nome dos arquivos usa **letras minúsculas** e **hífens** (kebab-case).
 - Documentos com `_[preencher]_` são rascunhos que ainda precisam de
   informação.

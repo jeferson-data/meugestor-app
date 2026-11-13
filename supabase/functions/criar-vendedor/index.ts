@@ -77,7 +77,29 @@ Deno.serve(async (req) => {
     }
 
     // 2. Ler e validar os dados recebidos
-    const body = await req.json();
+    
+    // 2. Ler e validar os dados recebidos
+    let body: Record<string, unknown>;
+
+    try {
+      const conteudo = await req.json();
+
+      if (
+        typeof conteudo !== 'object' ||
+        conteudo === null ||
+        Array.isArray(conteudo)
+      ) {
+        return resposta(400, {
+          error: 'Formato dos dados inválido.',
+        });
+      }
+
+      body = conteudo as Record<string, unknown>;
+    } catch {
+      return resposta(400, {
+        error: 'O conteúdo enviado não é um JSON válido.',
+      });
+    }
 
     const nome =
       typeof body.nome === 'string' ? body.nome.trim() : '';
@@ -89,13 +111,66 @@ Deno.serve(async (req) => {
 
     const telefone =
       typeof body.telefone === 'string'
-        ? body.telefone.trim()
+        ? body.telefone.trim() || null
         : null;
 
     const empresaId =
       typeof body.empresa_id === 'string'
         ? body.empresa_id.trim()
         : '';
+
+    if (!nome || !email || !empresaId) {
+      return resposta(400, {
+        error: 'Nome, e-mail e empresa são obrigatórios.',
+      });
+    }
+
+    if (
+      nome.length > 120 ||
+      email.length > 254 ||
+      (telefone !== null && telefone.length > 30)
+    ) {
+      return resposta(400, {
+        error: 'Dados informados inválidos.',
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      return resposta(400, {
+        error: 'Informe um endereço de e-mail válido.',
+      });
+    }
+
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    if (!uuidRegex.test(empresaId)) {
+      return resposta(400, {
+        error: 'Identificador de empresa inválido.',
+      });
+    }
+
+    const valorComissao = body.comissao_percentual;
+
+    const comissao =
+      valorComissao === undefined || valorComissao === null
+        ? 15
+        : typeof valorComissao === 'number'
+          ? valorComissao
+          : NaN;
+
+    if (
+      !Number.isFinite(comissao) ||
+      comissao < 0 ||
+      comissao > 100
+    ) {
+      return resposta(400, {
+        error: 'A comissão deve ser um número entre 0 e 100.',
+      });
+    }
+
 
     if (!nome || !email || !empresaId) {
       return resposta(400, {

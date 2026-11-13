@@ -70,6 +70,12 @@ docs/
 
 ---
 
+## Auditoria e segurança
+
+- [Auditoria de segurança do Supabase](arquitetura/AUDITORIA_SEGURANCA_SUPABASE.md) — achados da revisão do banco original, riscos priorizados e plano de correção no ambiente isolado de desenvolvimento.
+
+---
+
 ## Documentos por finalidade
 
 ### 📘 Para entender o produto

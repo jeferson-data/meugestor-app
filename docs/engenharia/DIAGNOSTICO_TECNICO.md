@@ -272,6 +272,6 @@ A documentação descreve uma constraint de `empresas.status_acesso` que aceita 
 
 O fluxo de conciliação inspecionado grava diretamente em `conciliacoes`, enquanto o modelo também descreve `contas_bancarias` e `transacoes_bancarias`; essa diferença precisa ser esclarecida. A consistência entre `empresa_id` e `movimentacao_id`, e as permissões por papel, dependem de validação no banco.
 
-O relatório detalhado está em [`docs/tecnica/REVISAO_BANCO_DADOS.md`](tecnica/REVISAO_BANCO_DADOS.md).
+O relatório detalhado está em [Revisão do banco de dados](../arquitetura/REVISAO_BANCO_DADOS.md).
 
 **Limite da evidência:** não houve conexão ao projeto Supabase em execução. Portanto, RLS, policies, constraints e schema implantado permanecem não verificados. Não executar correções SQL antes de exportar o estado atual e testar em ambiente isolado.

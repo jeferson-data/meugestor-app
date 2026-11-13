@@ -1,5 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import type { Database } from '../_shared/database.types.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

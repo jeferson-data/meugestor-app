@@ -77,12 +77,10 @@ Deno.serve(async (req) => {
     }
 
     // 2. Ler e validar os dados recebidos
-    
-    // 2. Ler e validar os dados recebidos
     let body: Record<string, unknown>;
 
     try {
-      const conteudo = await req.json();
+      const conteudo: unknown = await req.json();
 
       if (
         typeof conteudo !== 'object' ||
@@ -168,35 +166,6 @@ Deno.serve(async (req) => {
     ) {
       return resposta(400, {
         error: 'A comissão deve ser um número entre 0 e 100.',
-      });
-    }
-
-
-    if (!nome || !email || !empresaId) {
-      return resposta(400, {
-        error: 'Nome, e-mail e empresa são obrigatórios.',
-      });
-    }
-
-    if (nome.length > 120 || email.length > 254) {
-      return resposta(400, { error: 'Dados informados inválidos.' });
-    }
-
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-    if (!uuidRegex.test(empresaId)) {
-      return resposta(400, { error: 'Identificador de empresa inválido.' });
-    }
-
-    const comissao =
-      body.comissao_percentual == null
-        ? 15
-        : Number(body.comissao_percentual);
-
-    if (!Number.isFinite(comissao) || comissao < 0 || comissao > 100) {
-      return resposta(400, {
-        error: 'A comissão deve estar entre 0 e 100.',
       });
     }
 

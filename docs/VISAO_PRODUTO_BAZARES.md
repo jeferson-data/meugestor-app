@@ -1,22 +1,23 @@
-# Visão inicial do produto — Meu Gestor para lojas de bazar
+# Visão inicial do produto — Meu Gestor para lojas mistas
 
 - **Produto:** Meu Gestor
-- **Público prioritário:** pequenos bazares e lojas de variedades de bairro
+- **Público prioritário:** pequenas lojas mistas de bairro, que comercializam diferentes tipos de produtos
 - **Repositório:** `jeferson-data/meugestor-app`
 - **Branch:** `docs/engenharia-software-scrum`
-- **Status:** hipótese inicial de produto para validação com comerciantes
+- **Decisão de segmento:** lojas mistas (opção D), confirmada pelo responsável pelo produto
+- **Status:** hipótese de produto para validação com comerciantes
 
 ## 1. Visão do produto
 
-Ajudar proprietários de pequenos bazares a entender e controlar a movimentação financeira do negócio, organizar entradas e saídas, acompanhar contas e tomar decisões com informações simples, sem depender de planilhas complexas.
+Ajudar proprietários de pequenas lojas mistas a entender e controlar a movimentação financeira do negócio, organizar entradas e saídas, acompanhar contas e tomar decisões com informações simples, sem depender de planilhas complexas.
 
 O Meu Gestor deve ser percebido como uma ferramenta prática de gestão para o dia a dia do comerciante, e não como um sistema contábil ou ERP complexo.
 
-## 2. Segmento inicial
+## 2. Segmento prioritário
 
-Para este projeto, "bazar" será tratado inicialmente como uma pequena loja de variedades, com venda de mercadorias de diferentes categorias. Essa definição precisa ser confirmada com o usuário e com os primeiros comerciantes entrevistados.
+O público inicial será formado por **lojas mistas de bairro**, que vendem produtos de diferentes categorias no mesmo estabelecimento. O sistema não deve ser desenhado para uma única especialidade comercial.
 
-Não presumir que todos os bazares tenham o mesmo processo de venda, volume, equipe ou controle de estoque.
+A variedade do mix de produtos torna importante validar como cada loja organiza suas categorias, compras, vendas e estoque. Não presumir que todas as lojas tenham o mesmo sortimento, volume, equipe ou processo operacional.
 
 ## 3. Problemas a validar com potenciais clientes
 
@@ -25,15 +26,16 @@ As questões abaixo são hipóteses de descoberta, não necessidades já comprov
 1. O proprietário não sabe com clareza quanto vendeu, recebeu e gastou no dia ou no mês.
 2. Mistura dinheiro pessoal com dinheiro da loja.
 3. Não acompanha contas a pagar e a receber de forma organizada.
-4. Não sabe quais categorias ou produtos contribuem mais para o resultado.
+4. Não sabe quais categorias de produtos ou despesas mais impactam o resultado.
 5. Compra mercadorias sem uma visão clara do capital disponível.
 6. Tem dificuldade para conferir vendas, recebimentos e movimentações bancárias.
 7. Utiliza caderno, planilhas, mensagens ou memória para administrar o negócio.
 8. Tem pouco tempo e pouca familiaridade com sistemas complexos.
+9. Tem dificuldade para organizar produtos de naturezas diferentes sem um cadastro excessivamente trabalhoso.
 
 ## 4. Proposta inicial de valor
 
-"Tenha uma visão simples do dinheiro que entra, sai e fica no seu bazar, para administrar o negócio com mais controle e menos improviso."
+"Tenha uma visão simples do dinheiro que entra, sai e fica na sua loja, para administrar o negócio com mais controle e menos improviso."
 
 A proposta deverá ser validada em conversas e testes de uso. Não prometer aumento de lucro, automação integral ou conformidade contábil.
 
@@ -45,7 +47,7 @@ O escopo abaixo é uma proposta para priorização. A existência de uma tela ou
 
 - Cadastro e acesso seguro do estabelecimento;
 - Registro simples de entradas e saídas;
-- Categorias de receitas e despesas adequadas à rotina do bazar;
+- Categorias configuráveis de receitas e despesas;
 - Contas a pagar e a receber, com status e vencimentos;
 - Visão diária e mensal de receitas, despesas e resultado;
 - Consulta e filtro de movimentações;
@@ -55,6 +57,7 @@ O escopo abaixo é uma proposta para priorização. A existência de uma tela ou
 
 ### Importante, sujeito à validação
 
+- Cadastro de produtos com categorias flexíveis;
 - Cadastro de fornecedores;
 - Registro de compras de mercadorias;
 - Controle de estoque e alertas de reposição;
@@ -76,13 +79,14 @@ Esses itens só devem entrar no escopo quando houver necessidade real, viabilida
 
 ## 6. Princípios de experiência do usuário
 
-1. Linguagem cotidiana: usar termos que o comerciante entende.
-2. Poucos passos: registrar uma movimentação deve ser rápido.
-3. Mobile first: as tarefas frequentes precisam funcionar bem no celular.
-4. Indicadores claros: diferenciar venda, recebimento, despesa, lucro estimado e saldo de caixa.
-5. Transparência: permitir entender de onde vem cada número.
-6. Recuperação de erros: evitar perda de lançamentos e oferecer confirmação para ações destrutivas.
-7. Confiabilidade: consistência dos dados tem prioridade sobre quantidade de funcionalidades.
+1. **Linguagem cotidiana:** usar termos que o comerciante entende.
+2. **Poucos passos:** registrar uma movimentação deve ser rápido.
+3. **Flexibilidade:** permitir organizar categorias sem exigir um cadastro complexo de todo o sortimento logo no início.
+4. **Mobile first:** as tarefas frequentes precisam funcionar bem no celular.
+5. **Indicadores claros:** diferenciar venda, recebimento, despesa, lucro estimado e saldo de caixa.
+6. **Transparência:** permitir entender de onde vem cada número.
+7. **Recuperação de erros:** evitar perda de lançamentos e oferecer confirmação para ações destrutivas.
+8. **Confiabilidade:** consistência dos dados tem prioridade sobre quantidade de funcionalidades.
 
 ## 7. Critérios de sucesso do piloto
 
@@ -90,6 +94,7 @@ As metas numéricas serão definidas após conhecer o primeiro estabelecimento. 
 
 - O comerciante consegue configurar a loja sem ajuda constante?
 - Consegue registrar uma entrada e uma saída sem orientação?
+- Consegue categorizar movimentações de tipos diferentes de mercadoria?
 - Entende os indicadores do painel?
 - Os números apresentados conferem com os registros reais?
 - O aplicativo economiza tempo ou reduz alguma tarefa manual?
@@ -97,22 +102,24 @@ As metas numéricas serão definidas após conhecer o primeiro estabelecimento. 
 - Identifica valor suficiente para considerar pagar pelo serviço?
 - Quais funções ele realmente usa e quais ignora?
 
-## 8. Plano de descoberta com o primeiro bazar
+## 8. Plano de descoberta com a primeira loja
 
 1. Entrevistar o proprietário sobre como controla caixa, vendas, despesas, compras e estoque atualmente.
 2. Observar uma rotina real de fechamento de caixa, se o comerciante permitir.
-3. Identificar os três problemas mais frequentes e custosos.
-4. Demonstrar somente os fluxos relacionados a esses problemas.
-5. Acompanhar um piloto com dados reais, com autorização e cuidados de privacidade.
-6. Registrar dúvidas, erros, tarefas abandonadas e pedidos de melhoria.
-7. Ao final, decidir o que corrigir antes de oferecer um plano pago.
+3. Identificar como organiza as diferentes categorias de produtos e fornecedores.
+4. Identificar os três problemas mais frequentes e custosos.
+5. Demonstrar somente os fluxos relacionados a esses problemas.
+6. Acompanhar um piloto com dados reais, com autorização e cuidados de privacidade.
+7. Registrar dúvidas, erros, tarefas abandonadas e pedidos de melhoria.
+8. Ao final, decidir o que corrigir antes de oferecer um plano pago.
 
 ## 9. Decisões pendentes
 
-- Definir o perfil mais específico de bazar (variedades, presentes, utilidades domésticas, papelaria, armarinho ou misto).
+- Validar com comerciantes o perfil de loja mista e os principais tipos de mercadoria vendidos.
 - Confirmar se o controle de estoque é requisito indispensável para os primeiros clientes.
 - Definir como o comerciante registra as vendas: manualmente, por PDV, maquininha, marketplace ou combinação.
 - Confirmar se o produto será apenas financeiro no primeiro momento ou se deverá incluir vendas e estoque.
+- Definir o nível de detalhe necessário no cadastro de produtos e categorias.
 - Definir preço e modelo de cobrança somente após validar o valor percebido e os custos de operação.
 
 ## 10. Relação com o diagnóstico técnico

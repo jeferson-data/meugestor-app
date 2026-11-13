@@ -150,11 +150,11 @@ Os itens abaixo são **perguntas de diagnóstico**, não defeitos confirmados:
 
 | ID | Atividade | Situação |
 |---|---|---|
-| DIAG-01 | Inspecionar a árvore completa do repositório | Pendente |
+| DIAG-01 | Inspecionar a árvore completa do repositório | Concluído — árvore principal, src, docs e supabase inventariados |
 | DIAG-02 | Inventariar e revisar o conteúdo de `docs/` | Pendente |
 | DIAG-03 | Mapear páginas, componentes, contextos e serviços | Parcial |
 | DIAG-04 | Inspecionar cliente Supabase e chamadas de dados | Pendente |
-| DIAG-05 | Inspecionar migrations, schema, funções e políticas RLS | Pendente |
+| DIAG-05 | Inspecionar migrations, schema, funções e políticas RLS | Parcial — documentação do schema e Edge Function revisadas; não há migrations/policies versionadas identificadas; estado do Supabase ativo não verificado |
 | DIAG-06 | Mapear regras de negócio por módulo | Pendente |
 | DIAG-07 | Verificar testes, lint, build e automações de deploy | Pendente |
 | DIAG-08 | Revisar README com base no inventário confirmado | Aguardando DIAG-01 a DIAG-07 |
@@ -262,3 +262,16 @@ No trecho consultado, várias operações intermediárias de atualização não 
 
 As prioridades são hipóteses iniciais de risco e devem ser confirmadas após inspeção do banco, das políticas e dos fluxos completos.
 
+
+
+## 14. Revisão documental do banco de dados
+
+Foi localizado e revisado `docs/tecnica/banco-de-dados.md`, versão 2.0, que descreve 14 tabelas e declara RLS ativo em todas elas. A árvore completa da pasta `supabase/` nesta branch contém apenas `functions/criar-vendedor/index.ts`; não foram localizadas migrations, arquivos SQL de schema ou policies RLS versionadas.
+
+A documentação descreve uma constraint de `empresas.status_acesso` que aceita apenas `ativo` e `suspenso`, embora o código de arquivamento tente gravar `arquivada`. O próprio documento registra essa migração como pendente. Também registra como pendente a proteção de imutabilidade de `audit_log`.
+
+O fluxo de conciliação inspecionado grava diretamente em `conciliacoes`, enquanto o modelo também descreve `contas_bancarias` e `transacoes_bancarias`; essa diferença precisa ser esclarecida. A consistência entre `empresa_id` e `movimentacao_id`, e as permissões por papel, dependem de validação no banco.
+
+O relatório detalhado está em [`docs/tecnica/REVISAO_BANCO_DADOS.md`](tecnica/REVISAO_BANCO_DADOS.md).
+
+**Limite da evidência:** não houve conexão ao projeto Supabase em execução. Portanto, RLS, policies, constraints e schema implantado permanecem não verificados. Não executar correções SQL antes de exportar o estado atual e testar em ambiente isolado.
